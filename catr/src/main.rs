@@ -34,17 +34,24 @@ fn run(args: Args) -> Result<()> {
     for filename in args.files {
         match open(&filename) {
             Err(err) => eprintln!("Failed to open {filename}: {err}"),
-            Ok(file) => file.lines().enumerate().for_each(|(i, line)| match line {
-                Ok(value) => println!(
-                    "{}{value}",
+            Ok(file) => {
+                let mut prev_num = 0;
+                for (line_num, line_result) in file.lines().enumerate() {
+                    let line = line_result?;
                     if args.number_lines {
-                        format!("{}  ", i + 1)
+                        println!("{:6}\t{line}", line_num + 1);
+                    } else if args.number_nonblank {
+                        if line.is_empty() {
+                            println!();
+                        } else {
+                            prev_num += 1;
+                            println!("{prev_num:6}\t{line}");
+                        }
                     } else {
-                        String::new()
+                        println!("{line}");
                     }
-                ),
-                Err(e) => eprintln!("Failed to read a line in {filename}: {e}"),
-            }),
+                }
+            }
         }
     }
     Ok(())
